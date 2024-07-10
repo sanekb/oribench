@@ -1,0 +1,81 @@
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@oxi/core@^0.2.0": "jsr:@oxi/core@0.2.1",
+      "jsr:@oxi/core@^0.2.1": "jsr:@oxi/core@0.2.1",
+      "jsr:@oxi/core@^0.3.2": "jsr:@oxi/core@0.3.2",
+      "jsr:@oxi/list@^1.2.0": "jsr:@oxi/list@1.2.0",
+      "jsr:@oxi/option@^0.1.0": "jsr:@oxi/option@0.1.1",
+      "jsr:@oxi/option@^0.2.0": "jsr:@oxi/option@0.2.0",
+      "jsr:@oxi/result@^0.3.0": "jsr:@oxi/result@0.3.1",
+      "jsr:@oxi/result@^0.3.1": "jsr:@oxi/result@0.3.1",
+      "jsr:@oxi/schema@^0.3.0": "jsr:@oxi/schema@0.3.0",
+      "jsr:@std/bytes@^1.0.0-rc.3": "jsr:@std/bytes@1.0.0",
+      "jsr:@std/msgpack@^0.224.3": "jsr:@std/msgpack@0.224.3",
+      "npm:lodash@^4.17.21": "npm:lodash@4.17.21"
+    },
+    "jsr": {
+      "@oxi/core@0.2.1": {
+        "integrity": "36e340fb6d9fd29013c23cfd867645390e39f7b9b253c28514c2b5cb97638b5e"
+      },
+      "@oxi/core@0.3.2": {
+        "integrity": "d1651d8d3be52b01b47ca588cde22f8a849f90ee7007189c67c2c7d628698ee1"
+      },
+      "@oxi/list@1.2.0": {
+        "integrity": "b3177f3c8b961f9315a3aba5dcd64ab8367bdc05233d5d47490832ab9d31bd35",
+        "dependencies": [
+          "jsr:@oxi/core@^0.2.0",
+          "jsr:@oxi/option@^0.1.0"
+        ]
+      },
+      "@oxi/option@0.1.1": {
+        "integrity": "4d41eeeb26d9e67bcaa44767cded88e79b327c34a7e142800f22b57d401f544b"
+      },
+      "@oxi/option@0.2.0": {
+        "integrity": "31eb26fe703146a827c446589784918633f6d2250a8b6a00cab10f37f1feeb69"
+      },
+      "@oxi/result@0.3.1": {
+        "integrity": "8e92ccdca9364e1f8974dcd47472c23e3cdcea4f0bb568726d0fab8d60f3e437",
+        "dependencies": [
+          "jsr:@oxi/core@^0.2.1"
+        ]
+      },
+      "@oxi/schema@0.3.0": {
+        "integrity": "6bc1e0b9bcb6a56e16b279b7e3553c62f214e08350c054510fe592b8e578941a",
+        "dependencies": [
+          "jsr:@oxi/core@^0.3.2",
+          "jsr:@oxi/list@^1.2.0",
+          "jsr:@oxi/option@^0.2.0",
+          "jsr:@oxi/result@^0.3.0"
+        ]
+      },
+      "@std/bytes@1.0.0": {
+        "integrity": "9392e72af80adccaa1197912fa19990ed091cb98d5c9c4344b0c301b22d7c632"
+      },
+      "@std/msgpack@0.224.3": {
+        "integrity": "4d9833b336e9dbece62d934b800068c8fa280990c08855ddf8d608e8ff2b4977",
+        "dependencies": [
+          "jsr:@std/bytes@^1.0.0-rc.3"
+        ]
+      }
+    },
+    "npm": {
+      "lodash@4.17.21": {
+        "integrity": "sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {},
+  "workspace": {
+    "dependencies": [
+      "jsr:@oxi/result@^0.3.1",
+      "jsr:@oxi/schema@^0.3.0",
+      "jsr:@std/msgpack@^0.224.3",
+      "jsr:@std/ulid@^0.224.1",
+      "npm:crypto-js@^4.2.0",
+      "npm:lodash@^4.17.21"
+    ]
+  }
+}
