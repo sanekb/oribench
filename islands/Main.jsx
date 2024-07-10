@@ -4,15 +4,13 @@ import { useState, useEffect } from "preact/hooks";
 import { Ori } from '@ori/core';
 import schemas from '../game/schemas.js';
 
-
-
-
 import * as THREE from 'npm:three';
+import { Timer } from 'npm:three/addons/misc/Timer.js';
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera( 66, window.innerWidth / window.innerHeight, 0.1, 100 );
 let renderer = null;
-let gridHelper = null;
+const timer = new Timer();
 
 if ( IS_BROWSER ) {
 
@@ -176,7 +174,9 @@ export default function Main ( props ) {
 
 				if ( upd == 0 ) {
 
-					renderer.setAnimationLoop( function () {
+					renderer.setAnimationLoop( function ( dt ) {
+
+						timer.update()
 
 						cluster.where( { vid: 'player' } ).forEach( e => {
 							
@@ -194,8 +194,8 @@ export default function Main ( props ) {
 						cluster.where( { vid: 'position' } ).forEach( e => {
 							
 							const cube = meshes.get( cluster.entities.get(e) )
-							cube.position.x += e.get( 'velocity' ).x / 60;
-							cube.position.z += e.get( 'velocity' ).z / 60;
+							cube.position.x += e.get( 'velocity' ).x * (timer.getDelta());
+							cube.position.z += e.get( 'velocity' ).z * (timer.getDelta());
 							
 						})
 

@@ -22,7 +22,7 @@
     "**/_fresh/*"
   ],
   "imports": {
-    "@ori/core": "../ori/mod.js",
+    "@ori/core": "jsr:@sanekb/ori@^0.1.2",
     "@oxi/result": "jsr:@oxi/result@^0.3.1",
     "@oxi/schema": "jsr:@oxi/schema@^0.3.0",
     "@std/msgpack": "jsr:@std/msgpack@^0.224.3",
