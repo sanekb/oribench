@@ -4,70 +4,14 @@ import { useState, useEffect } from "preact/hooks";
 import { Ori } from '@ori/core';
 import schemas from '../game/schemas.js';
 
+import * as THREE from 'three';
+import { Timer } from 'three/addons/misc/Timer.js';
+
+import { renderer, camera, scene, render, setup, stats, upd, newBullet, newPlayer } from '../game/three.js';
 
 
-
-import * as THREE from 'npm:three';
-
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera( 66, window.innerWidth / window.innerHeight, 0.1, 100 );
-let renderer = null;
-let gridHelper = null;
-
-if ( IS_BROWSER ) {
-
-	renderer = new THREE.WebGLRenderer( { antialias: true } )
-	renderer.setSize( window.innerWidth, window.innerHeight );
-
-	window.onresize = () => {
-		renderer.setSize( window.innerWidth, window.innerHeight );
-		camera.aspect = window.innerWidth / window.innerHeight;
-		camera.updateProjectionMatrix()
-	}
-
-	document.body.appendChild( renderer.domElement );
-
-	camera.position.y = 40;
-	camera.lookAt( 0, 0, 0 );
-
-}
-
-
-function addScenery () {
-
-	scene.background = new THREE.Color( 0x050f19 );
-
-	const ambi = new THREE.AmbientLight( 0x7F7F7F );
-	const hemi = new THREE.HemisphereLight( 0xffffff, 0x000000, 0.5 );
-	const axes = new THREE.AxesHelper( 20 );
-	const grid = new THREE.GridHelper( 1000, 200, 0x102e4d, 0x102e4d );
-
-	hemi.position.set( 0, 100, 100 );
-	grid.position.set( 2.5, 0, 7.5 );
-
-	scene.add( ambi, hemi, /* axes, */ grid );	
-}
-
-function newPlayer ( color ) {
-
-	const geometry = new THREE.BoxGeometry( 3, 3, 3 );
-	const material = new THREE.MeshBasicMaterial( { color, transparent: true } );
-	const mesh = new THREE.Mesh( geometry, material );
-
-	return mesh;
-
-}
-
-function newBullet ( color ) {
-
-	const geometry = new THREE.SphereGeometry( 0.5, 16, 16 );
-	const material = new THREE.MeshBasicMaterial( { color, transparent: true } );
-	const mesh = new THREE.Mesh( geometry, material );
-
-	return mesh;
-
-}
-
+const timer1 = new Timer();
+const timer2 = new Timer();
 
 const meshes = new Map();
 const controls = {
@@ -78,6 +22,8 @@ const controls = {
 	KeyD: false,
 	Space: false,
 };
+let pid = null;
+let init = false;
 
 export default function Main ( props ) {
 
@@ -85,31 +31,103 @@ export default function Main ( props ) {
 
 	const [ cluster, setCluster ] = useState( null );
 	const [ server, setServer ] = useState( null );
-	const [ conn, setConn ] = useState( false );
-	const [ upd, setUpd ] = useState( 0 );
 
 	useEffect( () => {
 
 		const ori = new Ori();
+		const { $, $$, Cluster, Space } = ori;
 
 		ori.use( schemas );
 
-		ori.$$( 'Cluster', new ori.Cluster() )
-		const cluster = ori.$( 'Cluster' )
+		const cluster = new Cluster()
+		$$( 'Cluster', cluster )
 		setCluster( cluster )
 
-		
+		cluster
+		.use( function sync () {
 
-		ori.$$( 'Space', new ori.Space( {
+			meshes.keys().forEach( e => {
+				if ( ! cluster.entities.has( e ) ) {
+					scene.remove( meshes.get(e) )
+					meshes.delete( e );
+				}
+			})
+
+			cluster.where( { vid: 'bullet' } ).forEach( e => {
+				let m;
+				if ( ! meshes.has( e ) ) {
+					m = newBullet( e.get('color').value );
+					meshes.set( e, m )
+					scene.add( m )
+				} else {
+					m = meshes.get( e ) 
+				}
+				m.position.copy( e.get('position') )
+			})	
+			cluster.where( { vid: 'player' } ).forEach( e => {
+				let m;
+				if ( ! meshes.has( e ) ) {
+					m = newPlayer( e.get('color').value );
+					meshes.set( e, m )
+					scene.add( m )
+				} else {
+					m = meshes.get( e ) 
+				}
+				m.position.copy( e.get('position') )
+			})
+
+		})
+		.use( function smooth () {
+
+			stats.begin()
+
+			const p = cluster.find( { vid: 'player', id: pid } )
+
+			if ( p ) {
+				
+				const mesh = meshes.get( p )
+				if ( ! mesh ) return;
+				p.get( 'velocity' ).x = -25*controls.KeyA + 25*controls.KeyD;
+				p.get( 'velocity' ).z = -25*controls.KeyW + 25*controls.KeyS;
+
+				camera.position.lerp( mesh.position, 0.05 ).setY( 40 );
+
+			}
+
+			timer1.update();
+			cluster.where( { vid: 'position' }, { vid: 'velocity' } ).forEach( e => {
+				
+				const cube = meshes.get( e )
+				if ( ! cube ) return;
+				e.get('position').x += e.get( 'velocity' ).x * (timer1.getDelta());
+				e.get('position').z += e.get( 'velocity' ).z * (timer1.getDelta());
+				
+			})
+
+			cluster.where( { vid: 'lifetime' }, { vid: 'max_lifetime' } ).forEach( e => {
+				
+				const cube = meshes.get( e )
+				if ( ! cube ) return;
+				cube.material.opacity = (1-e.get( 'lifetime' ).value / e.get( 'max_lifetime' ).value)*0.75 + 0.25
+				
+			})
+
+			stats.end()
+
+		})
+		.use( function _render () {
+
+			render()
+
+		})
+
+		$$( 'Space', new Space( {
 
 			your_id ( ctx ) {
-
-				window.pid = ctx.valid.value;
-
+				pid = ctx.valid.value;
 			},
 
 			open ( ctx ) {
-				setConn( true )
 				setServer( ctx.client )
 
 				window.addEventListener( 'keydown', e => {
@@ -130,80 +148,22 @@ export default function Main ( props ) {
 			},
 
 			close ( ctx ) {
-				setConn( false )
 				renderer.setAnimationLoop( null )
 			},
 
 			delta ( ctx ) {
 
-				setUpd( u => u+1 )
-				cluster.update( ctx.valid.value )
-
-				meshes.clear();
-				scene.clear();
-
-				addScenery();
-
-				cluster.where( { vid: 'player' } ).forEach( e => {
-					
-					const mesh = newPlayer( e.get( 'color' ).value )
-
-					meshes.set( cluster.entities.get(e), mesh )
-
-					mesh.position.x = e.get( 'position' ).x;
-					mesh.position.z = e.get( 'position' ).z;
-					mesh.material.opacity = (e.get( 'health' ).value / 100)*0.75 + 0.25
-
-					if ( e.get('player').id == window.pid ) {
-						camera.position.copy( mesh.position ).setY( 40 );
-					}
-
-					scene.add( mesh );
-
-				})
-				cluster.where( { vid: 'bullet' } ).forEach( e => {
-					
-					const mesh = newBullet( e.get( 'color' ).value )
-
-					meshes.set( cluster.entities.get(e), mesh )
-
-					mesh.position.x = e.get( 'position' ).x;
-					mesh.position.z = e.get( 'position' ).z;
-
-					scene.add( mesh );
-
-				})
-
-				if ( upd == 0 ) {
-
-					renderer.setAnimationLoop( function () {
-
-						cluster.where( { vid: 'player' } ).forEach( e => {
-							
-							if ( e.get( 'player').id == window.pid ) {
-								const mesh = meshes.get( cluster.entities.get(e) )
-								e.get( 'velocity').x = -5*controls.KeyA + 5*controls.KeyD;
-								e.get( 'velocity').z = -5*controls.KeyW + 5*controls.KeyS;
-
-								camera.position.copy( mesh.position ).setY( 40 );
-
-							}
-
-						})
-
-						cluster.where( { vid: 'position' } ).forEach( e => {
-							
-							const cube = meshes.get( cluster.entities.get(e) )
-							cube.position.x += e.get( 'velocity' ).x / 60;
-							cube.position.z += e.get( 'velocity' ).z / 60;
-							
-						})
-
-						renderer.render( scene, camera )
-
-					});
-
+				if ( !init ) {
+					init = true;
+					setup();
+					renderer.setAnimationLoop( () => cluster.update() );
 				}
+
+				timer2.reset()
+				cluster.update( ctx.valid.value )
+				timer2.update()
+				
+				upd.update( timer2.getDelta() * 1e3, 50 )
 
 			},
 
@@ -214,6 +174,6 @@ export default function Main ( props ) {
 	}, []);
 
 
-	return <div></div>;
+	return <div class="absolute text-white ml-24 w-64 text-2xl" onclick={ () => server?.send( { vid: 'space' } ) }>SPACE</div>;
 
 }

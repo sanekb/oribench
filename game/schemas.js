@@ -7,7 +7,7 @@ export default {
 	delta_mode: {},
 
 	health: { value: num() },
-	color: { value: str() },
+	color: { value: num() },
 	controls: {
 		KeyW: bool(),
 		KeyA: bool(),
@@ -17,7 +17,7 @@ export default {
 	},
 	space: {},
 
-	bullet: {},	
+	bullet: {},
 
 	position: { x: num(), y: num(), z: num() },
 	velocity: { x: num(), y: num(), z: num() },

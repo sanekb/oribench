@@ -9,8 +9,8 @@ const ori = new Ori();
 const { Cluster, Space, Entity, $, $$, $$d } = ori;
 
 
-const MAX_ENTITIES = 10;
-const TPS = 10;
+const MAX_ENTITIES = 1000;
+const TPS = 1;
 const MSPT = 1000 / TPS;
 
 ori.use( schemas )
@@ -27,11 +27,15 @@ $$( 'DefaultSpace', new Space( {
 		const pid = Math.random()
 
 		entity
+			// .add( { vid: 'connected' } )
 			.add( { vid: 'player', id: pid } )
 			.add( { vid: 'health', value: 100 } )
-			.add( { vid: 'color', value: randomColor() } )
+			.add( { vid: 'color', value: parseInt(randomColor().slice(1), 16) } )
 			.add( { vid: 'position', x: Math.cos(angleP)*radiusP, y: 0, z: Math.sin(angleP)*radiusP } )
 			.add( { vid: 'velocity', x: 0, y: 0, z: 0 } )
+			.add( {	vid: 'controls',KeyW: false,KeyA: false,KeyS: false,KeyD: false,Space: false } )
+
+		$( 'DefaultCluster' ).add( entity );
 
 		ctx.client.send( { vid: 'your_id', value: pid } );
 
@@ -56,34 +60,35 @@ $$( 'DefaultSpace', new Space( {
 
 $$( 'DefaultCluster', new Cluster()
 
-	// .use( function spawner () {
+	.use( function spawner () {
 
-	// 	const total = this.where( { vid: 'color' } ).length;
+		const total = this.where( { vid: 'bullet' } ).length;
 
-	// 	const red = new THREE.Color( 0xff0000 );
-	// 	const green = new THREE.Color( 0x00ff00 );
+		const red = new THREE.Color( 0xff0000 );
+		const green = new THREE.Color( 0x00ff00 );
 
-	// 	for ( let i = total; i < MAX_ENTITIES; i++ ) {
+		for ( let i = total; i < MAX_ENTITIES; i++ ) {
 
-	// 		const radiusP = Math.random()*0+5;
-	// 		const radiusV = Math.random()*4+1;
+			const radiusP = Math.random()*0+5;
+			const radiusV = Math.random()*4+1;
 
-	// 		const angleP = Math.random()*Math.PI*2;
-	// 		const angleV = Math.random()*Math.PI*2;
+			const angleP = Math.random()*Math.PI*2;
+			const angleV = Math.random()*Math.PI*2;
 
-	// 		const entity = new Entity(
-	// 			{ vid: 'color', value: red.clone().lerp( green, (5-radiusV)/5  ).getHex() },
-	// 			{ vid: 'position', x: Math.cos(angleV)*radiusP, y: 0, z: Math.sin(angleV)*radiusP },
-	// 			{ vid: 'velocity', x: Math.cos(angleV)*radiusV, y: 0, z: Math.sin(angleV)*radiusV },
-	// 			{ vid: 'max_lifetime', value: Math.floor(Math.random()*7+3) },
-	// 			{ vid: 'lifetime', value: 0 },
-	// 		)
+			const entity = new Entity(
+				{ vid: 'bullet' },
+				{ vid: 'color', value: red.clone().lerp( green, (5-radiusV)/5  ).getHex() },
+				{ vid: 'position', x: Math.cos(angleV)*radiusP, y: 0, z: Math.sin(angleV)*radiusP },
+				{ vid: 'velocity', x: Math.cos(angleV)*radiusV, y: 0, z: Math.sin(angleV)*radiusV },
+				{ vid: 'max_lifetime', value: Math.floor(Math.random()*7+3) },
+				{ vid: 'lifetime', value: 0 },
+			)
 
-	// 		this.add( entity );
+			this.add( entity );
 
-	// 	}
+		}
 
-	// })
+	})
 	.use( function inputer () {
 
 		this.where( { vid: 'controls' } ).forEach( entity => {
@@ -91,8 +96,8 @@ $$( 'DefaultCluster', new Cluster()
 			const ctr = entity.get( 'controls' );
 			const vel = entity.get( 'velocity' );
 
-			vel.x = -5*ctr.KeyA + 5*ctr.KeyD;
-			vel.z = -5*ctr.KeyW + 5*ctr.KeyS;
+			vel.x = -25*ctr.KeyA + 25*ctr.KeyD;
+			vel.z = -25*ctr.KeyW + 25*ctr.KeyS;
 
 			if ( ctr.Space ) {
 
@@ -104,7 +109,7 @@ $$( 'DefaultCluster', new Cluster()
 
 				const bullet = new Entity(
 					{ vid: 'bullet' },
-					{ vid: 'color', value: '#00ffff' },
+					{ vid: 'color', value: 0x00ffff },
 					{ vid: 'velocity', x: Math.cos(angleV)*radiusV, y: 0, z: Math.sin(angleV)*radiusV },
 					{ vid: 'max_lifetime', value: 5 },
 					{ vid: 'lifetime', value: 0 },
@@ -166,16 +171,16 @@ $$( 'DefaultCluster', new Cluster()
 	})
 	.on( 'update', function ( v ) {
 
-		const delta_length = Object.keys( v.last ).length;
+		const delta_length = Object.keys( v.delta_last ).length;
 
 		this.where( { vid: 'player' } ).forEach( entity => {
 
 			if ( entity.has( 'delta_mode' ) && ( delta_length != 0 ) ) {
-				$( entity ).send( { vid: 'delta', value: v.last } );
+				$( entity ).send( { vid: 'delta', value: v.delta_last } );
 			}
 
 			if ( ! entity.has( 'delta_mode' ) ) {
-				$( entity ).send( { vid: 'delta', value: v.full } );
+				$( entity ).send( { vid: 'delta', value: v.delta_full } );
 				entity.add( { vid: 'delta_mode' } )
 			}
 
