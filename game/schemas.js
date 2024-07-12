@@ -1,4 +1,4 @@
-import { lit, str, num, obj, def, bool } from '@oxi/schema';
+import { lit, list, str, num, obj, def, bool, any } from '@oxi/schema';
 
 
 export default {
@@ -15,7 +15,15 @@ export default {
 		KeyD: bool(),
 		Space: bool(),
 	},
+	controls2: {
+		KeyW: list( any() ),
+		KeyA: list( any() ),
+		KeyS: list( any() ),
+		KeyD: list( any() ),
+		Space: list( any() ),
+	},
 	space: {},
+	create: {},
 
 	bullet: {},
 

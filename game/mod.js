@@ -4,16 +4,20 @@ import schemas from './schemas.js';
 import * as THREE from 'npm:three';
 import randomColor from 'npm:randomcolor';
 
+import { spawner, mover, liver, deleter } from './func.js'
+
+
+
 
 const ori = new Ori();
-const { Cluster, Space, Entity, $, $$, $$d } = ori;
-
-
-const MAX_ENTITIES = 1000;
-const TPS = 1;
-const MSPT = 1000 / TPS;
+const { Cluster, Space, Entity, $, $$, $t, $$d } = ori;
 
 ori.use( schemas )
+
+
+const TPS = 20;
+
+
 
 $$( 'DefaultSpace', new Space( {
 
@@ -27,15 +31,13 @@ $$( 'DefaultSpace', new Space( {
 		const pid = Math.random()
 
 		entity
-			// .add( { vid: 'connected' } )
 			.add( { vid: 'player', id: pid } )
 			.add( { vid: 'health', value: 100 } )
 			.add( { vid: 'color', value: parseInt(randomColor().slice(1), 16) } )
 			.add( { vid: 'position', x: Math.cos(angleP)*radiusP, y: 0, z: Math.sin(angleP)*radiusP } )
 			.add( { vid: 'velocity', x: 0, y: 0, z: 0 } )
-			.add( {	vid: 'controls',KeyW: false,KeyA: false,KeyS: false,KeyD: false,Space: false } )
 
-		$( 'DefaultCluster' ).add( entity );
+		$t( Cluster ).add( entity );
 
 		ctx.client.send( { vid: 'your_id', value: pid } );
 
@@ -46,157 +48,120 @@ $$( 'DefaultSpace', new Space( {
 		const { client, entity } = ctx;
 
 		$$d( client );
-		$( 'DefaultCluster' ).delete( entity );
+		$t( Cluster ).delete( entity );
 
 	},
 
-	controls ( ctx ) {
-
-		ctx.entity.add( ctx.valid );
-
-	},
+	// create ( ctx ) {
+	// 	console.log("OLO BLAYSDM,")
+	// 	createCluster()
+	// },
 
 }));
 
-$$( 'DefaultCluster', new Cluster()
+let clusters = 0;
 
-	.use( function spawner () {
+function createCluster () {
 
-		const total = this.where( { vid: 'bullet' } ).length;
+	let cid = ++clusters;
+	const cluster = new Cluster;
 
-		const red = new THREE.Color( 0xff0000 );
-		const green = new THREE.Color( 0x00ff00 );
+	cluster
+		.use( spawner )
+		.use( mover )
+		.use( liver )
+		.use( deleter )
+		.on( 'update', function ( v ) {
 
-		for ( let i = total; i < MAX_ENTITIES; i++ ) {
+			tps.set( cid, v.time )
 
-			const radiusP = Math.random()*0+5;
-			const radiusV = Math.random()*4+1;
+			const delta_length = Object.keys( v.delta ).length;
+			
+			this.where( { vid: 'player' } ).forEach( entity => {
 
-			const angleP = Math.random()*Math.PI*2;
-			const angleV = Math.random()*Math.PI*2;
+				if ( entity.has( 'delta_mode' ) && ( delta_length != 0 ) ) {
+					$( entity ).send( { vid: 'delta', value: v.delta } );
+				}
 
-			const entity = new Entity(
-				{ vid: 'bullet' },
-				{ vid: 'color', value: red.clone().lerp( green, (5-radiusV)/5  ).getHex() },
-				{ vid: 'position', x: Math.cos(angleV)*radiusP, y: 0, z: Math.sin(angleV)*radiusP },
-				{ vid: 'velocity', x: Math.cos(angleV)*radiusV, y: 0, z: Math.sin(angleV)*radiusV },
-				{ vid: 'max_lifetime', value: Math.floor(Math.random()*7+3) },
-				{ vid: 'lifetime', value: 0 },
-			)
+				if ( ! entity.has( 'delta_mode' ) ) {
+					$( entity ).send( { vid: 'snapshot', value: v.snapshot } );
+					entity.add( { vid: 'delta_mode' } )
+				}
 
-			this.add( entity );
-
-		}
-
-	})
-	.use( function inputer () {
-
-		this.where( { vid: 'controls' } ).forEach( entity => {
-
-			const ctr = entity.get( 'controls' );
-			const vel = entity.get( 'velocity' );
-
-			vel.x = -25*ctr.KeyA + 25*ctr.KeyD;
-			vel.z = -25*ctr.KeyW + 25*ctr.KeyS;
-
-			if ( ctr.Space ) {
-
-				const radiusP = Math.random()*0+5;
-				const radiusV = Math.random()*0+10;
-
-				const angleP = Math.random()*Math.PI*2;
-				const angleV = Math.random()*Math.PI*2;
-
-				const bullet = new Entity(
-					{ vid: 'bullet' },
-					{ vid: 'color', value: 0x00ffff },
-					{ vid: 'velocity', x: Math.cos(angleV)*radiusV, y: 0, z: Math.sin(angleV)*radiusV },
-					{ vid: 'max_lifetime', value: 5 },
-					{ vid: 'lifetime', value: 0 },
-					entity.get('position').toObject( false ),
-				)
-
-				$( 'DefaultCluster' ).add( bullet );
-
-			}
+			})
 
 		})
+		.start( TPS )
 
-	})
-	.use( function mover ( dt ) {
+	$$( cid, cluster );
 
-		this.where( { vid: 'position' } ).forEach( entity => {
+}
 
-			const pos = entity.get( 'position' );
-			const vel = entity.get( 'velocity' );
+const tps = new Map();
 
-			pos.x += vel.x * dt;
-			pos.z += vel.z * dt;
+for ( let cid = 1; cid <= 1; cid++ ) {
 
-		})
-
-	})
-	.use( function liver ( dt ) {
-
-		this.where( { vid: 'lifetime' } ).forEach( entity => {
-
-			entity.get( 'lifetime' ).value += dt;
-
-		})
-
-	})
-	.use( function deleter () {
-
-		this.where( { vid: 'health' } ).forEach( entity => {
-
-			const cur = entity.get( 'health' );
-
-			if ( cur.value <= 100 ) {
-				// this.delete( entity )
-			}
-
-		})
-
-		this.where( { vid: 'lifetime' } ).forEach( entity => {
-
-			const cur = entity.get( 'lifetime' );
-			const max = entity.get( 'max_lifetime' );
-
-			if ( cur.value >= max.value ) {
-				this.delete( entity )
-			}
-
-		})
-
-	})
-	.on( 'update', function ( v ) {
-
-		const delta_length = Object.keys( v.delta_last ).length;
-
-		this.where( { vid: 'player' } ).forEach( entity => {
-
-			if ( entity.has( 'delta_mode' ) && ( delta_length != 0 ) ) {
-				$( entity ).send( { vid: 'delta', value: v.delta_last } );
-			}
-
-			if ( ! entity.has( 'delta_mode' ) ) {
-				$( entity ).send( { vid: 'delta', value: v.delta_full } );
-				entity.add( { vid: 'delta_mode' } )
-			}
-
-		})
-
-	})
-	.start( TPS )
-)
+	createCluster()
+	
+}
 
 
 export { ori }
 
 
+
+
+// .use( function inputer () {
+
+// 	this.where( { vid: 'controls2' } ).forEach( entity => {
+
+// 		const ctr = entity.get( 'controls2' );
+// 		const vel = entity.get( 'velocity' );
+
+// 		const tKeyW = ( ctr.KeyW[1] ?? performance.now() ) - ( ctr.KeyW[0] ?? performance.now() )
+// 		const tKeyA = ( ctr.KeyA[1] ?? performance.now() ) - ( ctr.KeyA[0] ?? performance.now() )
+// 		const tKeyS = ( ctr.KeyS[1] ?? performance.now() ) - ( ctr.KeyS[0] ?? performance.now() )
+// 		const tKeyD = ( ctr.KeyD[1] ?? performance.now() ) - ( ctr.KeyD[0] ?? performance.now() )
+
+// 		vel.x = -25*tKeyA/1e3 + 25*tKeyD/1e3;
+// 		vel.z = -25*tKeyW/1e3 + 25*tKeyS/1e3;
+
+	// 		if ( ctr.KeyW[1] == null ) { ctr.KeyW[0] = performance.now(); ctr.KeyW[1] = null; } else { ctr.KeyW[0] = null; ctr.KeyW[1] = null; }
+// 		if ( ctr.KeyA[1] == null ) { ctr.KeyA[0] = performance.now(); ctr.KeyA[1] = null; } else { ctr.KeyA[0] = null; ctr.KeyA[1] = null; }
+// 		if ( ctr.KeyS[1] == null ) { ctr.KeyS[0] = performance.now(); ctr.KeyS[1] = null; } else { ctr.KeyS[0] = null; ctr.KeyS[1] = null; }
+// 		if ( ctr.KeyD[1] == null ) { ctr.KeyD[0] = performance.now(); ctr.KeyD[1] = null; } else { ctr.KeyD[0] = null; ctr.KeyD[1] = null; }
+
+// 		if ( false ) {
+
+// 			const radiusP = Math.random()*0+5;
+// 			const radiusV = Math.random()*0+10;
+
+// 			const angleP = Math.random()*Math.PI*2;
+// 			const angleV = Math.random()*Math.PI*2;
+
+// 			const bullet = new Entity(
+// 				{ vid: 'bullet' },
+// 				{ vid: 'color', value: 0x00ffff },
+// 				{ vid: 'velocity', x: Math.cos(angleV)*radiusV, y: 0, z: Math.sin(angleV)*radiusV },
+// 				{ vid: 'max_lifetime', value: 5 },
+// 				{ vid: 'lifetime', value: 0 },
+// 				entity.get('position').toObject( false ),
+// 			)
+
+// 			$( 'DefaultCluster' ).add( bullet );
+
+// 		}
+
+// 	})
+
+// })
+
+
+
 // setInterval( () => {
 
 // 	console.clear();
-// 	console.log( ori.store.toDebug() )
+// 	console.log( clusters )
+// 	console.log( tps )
 
-// }, 3e3 )
+// }, 1e3 )

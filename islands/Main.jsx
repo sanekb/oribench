@@ -12,6 +12,7 @@ import { renderer, camera, scene, render, setup, stats, upd, newBullet, newPlaye
 
 const timer1 = new Timer();
 const timer2 = new Timer();
+const timer3 = new Timer();
 
 const meshes = new Map();
 const controls = {
@@ -23,7 +24,6 @@ const controls = {
 	Space: false,
 };
 let pid = null;
-let init = false;
 
 export default function Main ( props ) {
 
@@ -31,6 +31,7 @@ export default function Main ( props ) {
 
 	const [ cluster, setCluster ] = useState( null );
 	const [ server, setServer ] = useState( null );
+	const [ u, setU ] = useState( 0 );
 
 	useEffect( () => {
 
@@ -87,10 +88,10 @@ export default function Main ( props ) {
 				
 				const mesh = meshes.get( p )
 				if ( ! mesh ) return;
-				p.get( 'velocity' ).x = -25*controls.KeyA + 25*controls.KeyD;
-				p.get( 'velocity' ).z = -25*controls.KeyW + 25*controls.KeyS;
+				// p.get( 'velocity' ).x = -25*controls.KeyA + 25*controls.KeyD;
+				// p.get( 'velocity' ).z = -25*controls.KeyW + 25*controls.KeyS;
 
-				camera.position.lerp( mesh.position, 0.05 ).setY( 40 );
+				camera.position.lerp( mesh.position, 0.005 ).setY( 40 );
 
 			}
 
@@ -123,48 +124,53 @@ export default function Main ( props ) {
 
 		$$( 'Space', new Space( {
 
+
+			open ( ctx ) {
+				setServer( ctx.client ); window.server= ctx.client
+
+				window.addEventListener( 'keydown', e => {
+					if ( e.code == 'KeyW' ) { (controls.KeyW ^ true) && ctx.client.send( controls ); controls.KeyW = true; }
+					if ( e.code == 'KeyA' ) { (controls.KeyA ^ true) && ctx.client.send( controls ); controls.KeyA = true; }
+					if ( e.code == 'KeyS' ) { (controls.KeyS ^ true) && ctx.client.send( controls ); controls.KeyS = true; }
+					if ( e.code == 'KeyD' ) { (controls.KeyD ^ true) && ctx.client.send( controls ); controls.KeyD = true; }
+					// if ( e.code == 'Space' ) { controls.Space = true; ctx.client.send( controls ) }
+				})
+				window.addEventListener( 'keyup', e => {
+					if ( e.code == 'KeyW' ) { (controls.KeyW ^ false) && ctx.client.send( controls ); controls.KeyW = false; }
+					if ( e.code == 'KeyA' ) { (controls.KeyA ^ false) && ctx.client.send( controls ); controls.KeyA = false; }
+					if ( e.code == 'KeyS' ) { (controls.KeyS ^ false) && ctx.client.send( controls ); controls.KeyS = false; }
+					if ( e.code == 'KeyD' ) { (controls.KeyD ^ false) && ctx.client.send( controls ); controls.KeyD = false; }
+					// if ( e.code == 'Space' ) { controls.Space = false; ctx.client.send( controls ) }
+				})
+
+			},
+
 			your_id ( ctx ) {
 				pid = ctx.valid.value;
 			},
 
-			open ( ctx ) {
-				setServer( ctx.client )
-
-				window.addEventListener( 'keydown', e => {
-					if ( e.code == 'KeyW' ) { controls.KeyW = true; ctx.client.send( controls ) }
-					if ( e.code == 'KeyA' ) { controls.KeyA = true; ctx.client.send( controls ) }
-					if ( e.code == 'KeyS' ) { controls.KeyS = true; ctx.client.send( controls ) }
-					if ( e.code == 'KeyD' ) { controls.KeyD = true; ctx.client.send( controls ) }
-					if ( e.code == 'Space' ) { controls.Space = true; ctx.client.send( controls ) }
-				})
-				window.addEventListener( 'keyup', e => {
-					if ( e.code == 'KeyW' ) { controls.KeyW = false; ctx.client.send( controls ) }
-					if ( e.code == 'KeyA' ) { controls.KeyA = false; ctx.client.send( controls ) }
-					if ( e.code == 'KeyS' ) { controls.KeyS = false; ctx.client.send( controls ) }
-					if ( e.code == 'KeyD' ) { controls.KeyD = false; ctx.client.send( controls ) }
-					if ( e.code == 'Space' ) { controls.Space = false; ctx.client.send( controls ) }
-				})
-
-			},
-
-			close ( ctx ) {
-				renderer.setAnimationLoop( null )
+			snapshot ( ctx ) {
+				cluster.fromSnapshot( ctx.valid.value );
+				setup();
+				renderer.setAnimationLoop( () => cluster.update() );
+				// cluster.start( 1 )
 			},
 
 			delta ( ctx ) {
-
-				if ( !init ) {
-					init = true;
-					setup();
-					renderer.setAnimationLoop( () => cluster.update() );
-				}
+				timer3.update()
+				// console.log( timer3.getDelta()*1e3^0 )
+				setU( u => u + 1 )
 
 				timer2.reset()
 				cluster.update( ctx.valid.value )
 				timer2.update()
 				
-				upd.update( timer2.getDelta() * 1e3, 50 )
+				upd.update( timer3.getDelta() * 1e3, 100 )
 
+			},
+
+			close ( ctx ) {
+				renderer.setAnimationLoop( null )
 			},
 
 		}))
@@ -174,6 +180,6 @@ export default function Main ( props ) {
 	}, []);
 
 
-	return <div class="absolute text-white ml-24 w-64 text-2xl" onclick={ () => server?.send( { vid: 'space' } ) }>SPACE</div>;
+	return <div class="absolute text-white ml-24 w-64 text-2xl" onclick={ () => server?.send( { vid: 'create' } ) }>SPACE</div>;
 
 }
