@@ -15,7 +15,7 @@ const { Cluster, Space, Entity, $, $$, $t, $$d } = ori;
 ori.use( schemas )
 
 
-const TPS = 1;
+const TPS = 20;
 
 
 
@@ -73,8 +73,6 @@ function createCluster () {
 		.use( deleter )
 		.on( 'eval', function () {
 			
-			console.log( this.where( { vid: 'player' } ).length )
-
 			this.where( { vid: 'player' } ).forEach( entity => {
 
 				if ( entity.has( 'delta_mode' ) ) {

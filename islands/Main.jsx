@@ -165,9 +165,9 @@ window.cluster = cluster
 
 			delta ( ctx ) {
 
-				console.log( ctx.valid.value.get('d').values().toArray() )
-				console.log( ctx.valid.value.get('a').values().toArray().map( e => e[ id ]) )
-				console.log( ctx.valid.value.get('m').keys().toArray() )
+				// console.log( ctx.valid.value.get('d').values().toArray() )
+				// console.log( ctx.valid.value.get('a').values().toArray().map( e => e[ id ]) )
+				// console.log( ctx.valid.value.get('m').keys().toArray() )
 
 				timer3.update()
 				// console.log( timer3.getDelta()*1e3^0 )
@@ -177,7 +177,7 @@ window.cluster = cluster
 				cluster.delta = ( ctx.valid.value )
 				timer2.update()
 				
-				upd.update( timer3.getDelta() * 1e3, 100 )
+				upd.update( timer2.getDelta() * 1e3, 100 )
 
 			},
 

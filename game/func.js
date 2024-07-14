@@ -2,7 +2,7 @@ import * as THREE from 'npm:three';
 
 const ori = Symbol.for( 'ori' );
 
-const MAX_ENTITIES = 10;
+const MAX_ENTITIES = 100;
 
 let spawned = false;
 
@@ -13,29 +13,29 @@ export function spawner () {
 	const red = new THREE.Color( 0xff0000 );
 	const green = new THREE.Color( 0x00ff00 );
 
-	// if ( spawned ) {
+	if ( spawned ) {
 
-	// 	this.where( { vid: 'hidden' } ).forEach( entity => {
+		this.where( { vid: 'hidden' } ).forEach( entity => {
 
-	// 		const radiusP = Math.random()*0+5;
-	// 		const radiusV = Math.random()*4+1;
+			const radiusP = Math.random()*0+5;
+			const radiusV = Math.random()*4+1;
 
-	// 		const angleP = Math.random()*Math.PI*2;
-	// 		const angleV = Math.random()*Math.PI*2;
+			const angleP = Math.random()*Math.PI*2;
+			const angleV = Math.random()*Math.PI*2;
 
-	// 		entity.get( 'color' ).copy( { value: red.clone().lerp( green, (5-radiusV)/5  ).getHex() } );
-	// 		entity.get( 'position' ).copy( { x: Math.cos(angleV)*radiusP, y: 0, z: Math.sin(angleV)*radiusP } );
-	// 		entity.get( 'velocity' ).copy( { x: Math.cos(angleV)*radiusV, y: 0, z: Math.sin(angleV)*radiusV } );
-	// 		entity.get( 'max_lifetime' ).copy( { value: Math.floor(Math.random()*7+3) } );
-	// 		entity.get( 'lifetime' ).copy( { value: 0 } );
+			entity.get( 'color' ).copy( { value: red.clone().lerp( green, (5-radiusV)/5  ).getHex() } );
+			entity.get( 'position' ).copy( { x: Math.cos(angleV)*radiusP, y: 0, z: Math.sin(angleV)*radiusP } );
+			entity.get( 'velocity' ).copy( { x: Math.cos(angleV)*radiusV, y: 0, z: Math.sin(angleV)*radiusV } );
+			entity.get( 'max_lifetime' ).copy( { value: Math.floor(Math.random()*7+3) } );
+			entity.get( 'lifetime' ).copy( { value: 0 } );
 
-	// 		entity.delete( 'hidden' );
+			entity.delete( 'hidden' );
 
-	// 	})
+		})
 
-	// 	return;
+		return;
 
-	// }
+	}
 
 	for ( let i = this.where( { vid: 'bullet' } ).length; i < MAX_ENTITIES; i++ ) {
 
@@ -58,7 +58,7 @@ export function spawner () {
 
 	}
 
-	// spawned = true;
+	spawned = true;
 
 }
 
@@ -94,8 +94,8 @@ export function deleter () {
 		const max = entity.get( 'max_lifetime' );
 
 		if ( cur.value >= max.value ) {
-			this.delete( entity )
-			// entity.add({vid:'hidden'})
+			// this.delete( entity )
+			entity.add({vid:'hidden'})
 		}
 
 	})
