@@ -15,7 +15,7 @@ const { Cluster, Space, Entity, $, $$, $t, $$d } = ori;
 ori.use( schemas )
 
 
-const TPS = 20;
+const TPS = 1;
 
 
 
@@ -52,10 +52,10 @@ $$( 'DefaultSpace', new Space( {
 
 	},
 
-	// create ( ctx ) {
-	// 	console.log("OLO BLAYSDM,")
+	create ( ctx ) {
+		console.log("OLO BLAYSDM,")
 	// 	createCluster()
-	// },
+	},
 
 }));
 
@@ -71,20 +71,18 @@ function createCluster () {
 		.use( mover )
 		.use( liver )
 		.use( deleter )
-		.on( 'update', function ( v ) {
-
-			tps.set( cid, v.time )
-
-			const delta_length = Object.keys( v.delta ).length;
+		.on( 'eval', function () {
 			
+			console.log( this.where( { vid: 'player' } ).length )
+
 			this.where( { vid: 'player' } ).forEach( entity => {
 
-				if ( entity.has( 'delta_mode' ) && ( delta_length != 0 ) ) {
-					$( entity ).send( { vid: 'delta', value: v.delta } );
+				if ( entity.has( 'delta_mode' ) ) {
+					$( entity ).send( { vid: 'delta', value: this.delta } );
 				}
 
 				if ( ! entity.has( 'delta_mode' ) ) {
-					$( entity ).send( { vid: 'snapshot', value: v.snapshot } );
+					$( entity ).send( { vid: 'snapshot', value: this.snapshot } );
 					entity.add( { vid: 'delta_mode' } )
 				}
 

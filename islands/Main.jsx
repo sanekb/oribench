@@ -3,12 +3,19 @@ import { useState, useEffect } from "preact/hooks";
 
 import { Ori } from '@ori/core';
 import schemas from '../game/schemas.js';
+const id = Symbol.for( 'id' );
 
 import * as THREE from 'three';
 import { Timer } from 'three/addons/misc/Timer.js';
 
 import { renderer, camera, scene, render, setup, stats, upd, newBullet, newPlayer } from '../game/three.js';
 
+import { Packr, FLOAT32_OPTIONS } from 'msgpackr';
+const packr1 = new Packr( { useFloat32: FLOAT32_OPTIONS.ALWAYS, sequential: true } );
+const packr2 = new Packr( { useFloat32: FLOAT32_OPTIONS.ALWAYS, sequential: true } );
+
+window.packr1 = packr1;
+window.packr2 = packr2;
 
 const timer1 = new Timer();
 const timer2 = new Timer();
@@ -34,7 +41,7 @@ export default function Main ( props ) {
 	const [ u, setU ] = useState( 0 );
 
 	useEffect( () => {
-
+// return;
 		const ori = new Ori();
 		const { $, $$, Cluster, Space } = ori;
 
@@ -43,7 +50,7 @@ export default function Main ( props ) {
 		const cluster = new Cluster()
 		$$( 'Cluster', cluster )
 		setCluster( cluster )
-
+window.cluster = cluster
 		cluster
 		.use( function sync () {
 
@@ -150,19 +157,24 @@ export default function Main ( props ) {
 			},
 
 			snapshot ( ctx ) {
-				cluster.fromSnapshot( ctx.valid.value );
+				cluster.snapshot = ( ctx.valid.value );
 				setup();
-				renderer.setAnimationLoop( () => cluster.update() );
+				renderer.setAnimationLoop( () => cluster.eval() );
 				// cluster.start( 1 )
 			},
 
 			delta ( ctx ) {
+
+				console.log( ctx.valid.value.get('d').values().toArray() )
+				console.log( ctx.valid.value.get('a').values().toArray().map( e => e[ id ]) )
+				console.log( ctx.valid.value.get('m').keys().toArray() )
+
 				timer3.update()
 				// console.log( timer3.getDelta()*1e3^0 )
 				setU( u => u + 1 )
 
 				timer2.reset()
-				cluster.update( ctx.valid.value )
+				cluster.delta = ( ctx.valid.value )
 				timer2.update()
 				
 				upd.update( timer3.getDelta() * 1e3, 100 )

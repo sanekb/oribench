@@ -24,6 +24,7 @@ export default {
 	},
 	space: {},
 	create: {},
+	hidden: {},
 
 	bullet: {},
 
