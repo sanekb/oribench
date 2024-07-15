@@ -2,7 +2,7 @@ import * as THREE from 'npm:three';
 
 const ori = Symbol.for( 'ori' );
 
-const MAX_ENTITIES = 100;
+const MAX_ENTITIES = 1000;
 
 let spawned = false;
 

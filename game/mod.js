@@ -15,7 +15,7 @@ const { Cluster, Space, Entity, $, $$, $t, $$d } = ori;
 ori.use( schemas )
 
 
-const TPS = 20;
+const TPS = 1;
 
 
 
@@ -72,11 +72,18 @@ function createCluster () {
 		.use( liver )
 		.use( deleter )
 		.on( 'eval', function () {
-			
+			// console.clear()
+			const delta = this.delta;
+			// console.log(
+			// 	Object.fromEntries( delta.entries().map( ( [ eid, entity ] ) => [ eid, (
+			// 		entity == null ? null : ( entity instanceof Set ? entity.size : ( entity.toDebug(true)) )
+			// 	) ] ) )
+			// )
+
 			this.where( { vid: 'player' } ).forEach( entity => {
 
 				if ( entity.has( 'delta_mode' ) ) {
-					$( entity ).send( { vid: 'delta', value: this.delta } );
+					$( entity ).send( { vid: 'delta', value: delta } );
 				}
 
 				if ( ! entity.has( 'delta_mode' ) ) {
