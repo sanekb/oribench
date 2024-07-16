@@ -48,7 +48,7 @@ cluster1
 	.use( function () {
 		this.delete( this.find({}) )
 	})
-	.on( 'eval', () => {
+	.on( 'tick', () => {
 		
 		const d = cluster1.delta
 		
@@ -62,4 +62,4 @@ cluster1
 		console.log( cluster2 )
 
 	})
-	.eval();
+	.tick();

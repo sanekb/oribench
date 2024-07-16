@@ -15,7 +15,7 @@ const { Cluster, Space, Entity, $, $$, $t, $$d } = ori;
 ori.use( schemas )
 
 
-const TPS = 1;
+const TPS = 20;
 
 
 
@@ -71,7 +71,7 @@ function createCluster () {
 		.use( mover )
 		.use( liver )
 		.use( deleter )
-		.on( 'eval', function () {
+		.on( 'tick', function () {
 			// console.clear()
 			const delta = this.delta;
 			// console.log(

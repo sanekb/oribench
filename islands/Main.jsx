@@ -159,7 +159,7 @@ window.cluster = cluster
 			snapshot ( ctx ) {
 				cluster.snapshot = ( ctx.valid.value );
 				setup();
-				renderer.setAnimationLoop( () => cluster.eval() );
+				renderer.setAnimationLoop( () => cluster.tick() );
 				// cluster.start( 1 )
 			},
 
@@ -177,7 +177,7 @@ window.cluster = cluster
 				cluster.delta = ( ctx.valid.value )
 				timer2.update()
 				
-				upd.update( timer2.getDelta() * 1e3, 100 )
+				upd.update( timer3.getDelta() * 1e3, 100 )
 
 			},
 
